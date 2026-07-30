@@ -4,7 +4,6 @@ import 'connectivity_status.dart';
 import 'tecta_inspector_interceptor.dart';
 import 'smart_retry/retry_interceptor.dart';
 import 'dio_error_util.dart';
-import 'tecta_inspector_facade.dart';
 
 enum MethodRequest { POST, GET, PUT, DELETE }
 
@@ -240,9 +239,7 @@ class TectaHttp {
 
   String? _extractServerMessage(dynamic data) {
     if (data is Map<String, dynamic>) {
-      return data['message'] as String? ??
-          data['error'] as String? ??
-          data['msg'] as String?;
+      return data['message'] as String? ?? data['error'] as String? ?? data['msg'] as String?;
     }
     return null;
   }

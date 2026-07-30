@@ -104,9 +104,7 @@ class TectaInspectorInterceptor extends Interceptor {
     // Record network log to TectaInspector
     if (TectaInspector.enabled) {
       final startTime = options.extra[_startTimeKey] as int?;
-      final duration = startTime != null
-          ? DateTime.now().millisecondsSinceEpoch - startTime
-          : 0;
+      final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
       final contentBuffer = StringBuffer();
       contentBuffer.writeln('Method: ${options.method}');
@@ -115,7 +113,8 @@ class TectaInspectorInterceptor extends Interceptor {
       contentBuffer.writeln('Status Code: ${response.statusCode}');
       contentBuffer.writeln('\n[Headers]\n${_prettyJsonEncode(options.headers)}');
       if (options.queryParameters.isNotEmpty) {
-        contentBuffer.writeln('\n[Query Parameters]\n${_prettyJsonEncode(options.queryParameters)}');
+        contentBuffer
+            .writeln('\n[Query Parameters]\n${_prettyJsonEncode(options.queryParameters)}');
       }
       contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(options.data)}');
       contentBuffer.writeln('\n[Response Body]\n${_prettyJsonEncode(response.data)}');
@@ -155,9 +154,7 @@ class TectaInspectorInterceptor extends Interceptor {
     // Record network error log to TectaInspector
     if (TectaInspector.enabled) {
       final startTime = options.extra[_startTimeKey] as int?;
-      final duration = startTime != null
-          ? DateTime.now().millisecondsSinceEpoch - startTime
-          : 0;
+      final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
       final contentBuffer = StringBuffer();
       contentBuffer.writeln('Method: ${options.method}');
@@ -180,7 +177,7 @@ class TectaInspectorInterceptor extends Interceptor {
         content: contentBuffer.toString(),
         isError: true,
         error: err.toString(),
-        stackTrace: err.stackTrace?.toString(),
+        stackTrace: err.stackTrace.toString(),
         metadata: {
           'method': options.method,
           'url': options.uri.toString(),

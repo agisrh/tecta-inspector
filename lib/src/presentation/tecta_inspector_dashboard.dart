@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../inspector_controller.dart';
 import '../models/log_entry.dart';
 import '../tecta_inspector_facade.dart';
@@ -12,7 +11,8 @@ class TectaInspectorDashboard extends StatefulWidget {
   State<TectaInspectorDashboard> createState() => _TectaInspectorDashboardState();
 }
 
-class _TectaInspectorDashboardState extends State<TectaInspectorDashboard> with SingleTickerProviderStateMixin {
+class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';

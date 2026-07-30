@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/log_entry.dart';
-import '../../tecta_inspector_facade.dart';
 
 class LogItemWidget extends StatefulWidget {
   final LogEntry log;
@@ -35,8 +34,8 @@ class _LogItemWidgetState extends State<LogItemWidget> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: widget.isDarkMode 
-                    ? const Color.fromRGBO(44, 44, 44, 0.9) 
+                color: widget.isDarkMode
+                    ? const Color.fromRGBO(44, 44, 44, 0.9)
                     : const Color.fromRGBO(51, 51, 51, 0.9),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
@@ -54,7 +53,8 @@ class _LogItemWidgetState extends State<LogItemWidget> {
                   const SizedBox(width: 8),
                   Text(
                     message,
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -118,11 +118,12 @@ class _LogItemWidgetState extends State<LogItemWidget> {
         : (widget.isDarkMode ? Colors.white : const Color(0xFF1C1C1E));
     final detailTextColor = widget.isDarkMode ? const Color(0xFFE0E0E0) : const Color(0xFF2C2C2C);
     final stackTraceBg = widget.isDarkMode ? const Color(0xFF2A1C1C) : const Color(0xFFFFEBEE);
-    final stackTraceTextColor = widget.isDarkMode ? const Color(0xFFFFCDCD) : const Color(0xFFC62828);
-    
-    final borderColor = widget.isDarkMode 
-        ? Colors.white.withOpacity(0.05) 
-        : Colors.black.withOpacity(0.04);
+    final stackTraceTextColor =
+        widget.isDarkMode ? const Color(0xFFFFCDCD) : const Color(0xFFC62828);
+
+    final borderColor = widget.isDarkMode
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.04);
 
     return Material(
       color: rowBgColor,
@@ -174,7 +175,8 @@ class _LogItemWidgetState extends State<LogItemWidget> {
                         Clipboard.setData(ClipboardData(text: log.content));
                         _showToast(context, 'Log copied to clipboard!');
                       },
-                      icon: Icon(Icons.copy_all, size: 16, color: widget.isDarkMode ? Colors.tealAccent : Colors.teal),
+                      icon: Icon(Icons.copy_all,
+                          size: 16, color: widget.isDarkMode ? Colors.tealAccent : Colors.teal),
                       label: Text(
                         'Copy Log',
                         style: TextStyle(
@@ -203,18 +205,21 @@ class _LogItemWidgetState extends State<LogItemWidget> {
                     const SizedBox(height: 12),
                     const Text(
                       'Error Message:',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
                     ),
                     SelectableText(
                       log.error!,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.redAccent),
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 12, color: Colors.redAccent),
                     ),
                   ],
                   if (log.stackTrace != null && log.stackTrace!.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     const Text(
                       'Stack Trace:',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -225,9 +230,9 @@ class _LogItemWidgetState extends State<LogItemWidget> {
                         color: stackTraceBg,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: widget.isDarkMode 
-                              ? Colors.redAccent.withOpacity(0.15) 
-                              : Colors.red.withOpacity(0.1),
+                          color: widget.isDarkMode
+                              ? Colors.redAccent.withValues(alpha: 0.15)
+                              : Colors.red.withValues(alpha: 0.1),
                         ),
                       ),
                       child: SingleChildScrollView(

@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:ui';
 import 'models/log_entry.dart';
 import 'inspector_controller.dart';
 
@@ -21,13 +20,13 @@ class TectaInspector {
       FlutterError.onError = (FlutterErrorDetails details) {
         final exceptionStr = details.exceptionAsString();
         final stackStr = details.stack?.toString() ?? '';
-        
+
         // Prevent infinite cross-frame logging loops if the error occurs in our own package code
         if (exceptionStr.contains('tecta_inspector') || stackStr.contains('tecta_inspector')) {
           originalOnError?.call(details);
           return;
         }
-        
+
         logError(
           'Unhandled Flutter Error',
           error: exceptionStr,
@@ -41,7 +40,7 @@ class TectaInspector {
       PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
         final errorStr = error.toString();
         final stackStr = stack.toString();
-        
+
         // Prevent infinite cross-frame logging loops if the error occurs in our own package code
         if (errorStr.contains('tecta_inspector') || stackStr.contains('tecta_inspector')) {
           if (originalPlatformOnError != null) {
@@ -49,7 +48,7 @@ class TectaInspector {
           }
           return false;
         }
-        
+
         logError(
           'Unhandled Async Error',
           error: errorStr,
