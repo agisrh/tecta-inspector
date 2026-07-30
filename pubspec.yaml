@@ -1,0 +1,24 @@
+name: tecta_inspector
+description: "A professional networking, logging, and debugging tool for Tecta Flutter applications."
+version: 0.0.1
+homepage: https://github.com/tecta/tecta-api
+repository: https://github.com/tecta/tecta-api
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.4.3+1
+  http_parser: ^4.0.2
+  path: ^1.8.3
+
+dev_dependencies:
+  flutter_lints: ^3.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
