@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'tecta_inspector_facade.dart';
 import 'models/log_entry.dart';
+import 'masking_util.dart';
 
 enum Level { debug, info, warning, error, alien }
 
@@ -73,14 +74,17 @@ class TectaInspectorInterceptor extends Interceptor {
     final currentLogRequestHeader = options.extra['logRequestHeader'] ?? logRequestHeader;
     final currentLogRequestBody = options.extra['logRequestBody'] ?? logRequestBody;
 
+    final maskedHeaders = MaskingUtil.mask(options.headers);
+    final maskedData = MaskingUtil.mask(options.data);
+
     if (currentLogRequestUrl) {
       logDebug('onRequest: ${options.method} request => $requestPath', level: Level.info);
     }
     if (currentLogRequestHeader) {
-      logDebug('onRequest: Request Headers => ${options.headers}', level: Level.info);
+      logDebug('onRequest: Request Headers => $maskedHeaders', level: Level.info);
     }
     if (currentLogRequestBody) {
-      logDebug('onRequest: Request Data => ${_prettyJsonEncode(options.data)}', level: Level.info);
+      logDebug('onRequest: Request Data => ${_prettyJsonEncode(maskedData)}', level: Level.info);
     }
 
     return super.onRequest(options, handler);
@@ -92,12 +96,19 @@ class TectaInspectorInterceptor extends Interceptor {
     final currentLogResponseBody = options.extra['logResponseBody'] ?? logResponseBody;
     final currentLogResponseHeader = options.extra['logResponseHeader'] ?? logResponseHeader;
 
+    final responseHeadersMap = <String, dynamic>{};
+    response.headers.forEach((name, values) {
+      responseHeadersMap[name] = values;
+    });
+    final maskedResponseHeaders = MaskingUtil.mask(responseHeadersMap);
+    final maskedResponseBody = MaskingUtil.mask(response.data);
+
     if (currentLogResponseHeader) {
-      logDebug('onResponse: Response Headers => ${response.headers}', level: Level.debug);
+      logDebug('onResponse: Response Headers => $maskedResponseHeaders', level: Level.debug);
     }
     if (currentLogResponseBody) {
       logDebug(
-          'onResponse: StatusCode: ${response.statusCode}, Data: ${_prettyJsonEncode(response.data)}',
+          'onResponse: StatusCode: ${response.statusCode}, Data: ${_prettyJsonEncode(maskedResponseBody)}',
           level: Level.debug);
     }
 
@@ -106,18 +117,22 @@ class TectaInspectorInterceptor extends Interceptor {
       final startTime = options.extra[_startTimeKey] as int?;
       final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
+      final maskedRequestHeaders = MaskingUtil.mask(options.headers);
+      final maskedRequestData = MaskingUtil.mask(options.data);
+      final maskedQueryParameters = MaskingUtil.mask(options.queryParameters);
+
       final contentBuffer = StringBuffer();
       contentBuffer.writeln('Method: ${options.method}');
       contentBuffer.writeln('URL: ${options.uri}');
       contentBuffer.writeln('Duration: ${duration}ms');
       contentBuffer.writeln('Status Code: ${response.statusCode}');
-      contentBuffer.writeln('\n[Headers]\n${_prettyJsonEncode(options.headers)}');
+      contentBuffer.writeln('\n[Headers]\n${_prettyJsonEncode(maskedRequestHeaders)}');
       if (options.queryParameters.isNotEmpty) {
         contentBuffer
-            .writeln('\n[Query Parameters]\n${_prettyJsonEncode(options.queryParameters)}');
+            .writeln('\n[Query Parameters]\n${_prettyJsonEncode(maskedQueryParameters)}');
       }
-      contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(options.data)}');
-      contentBuffer.writeln('\n[Response Body]\n${_prettyJsonEncode(response.data)}');
+      contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(maskedRequestData)}');
+      contentBuffer.writeln('\n[Response Body]\n${_prettyJsonEncode(maskedResponseBody)}');
 
       TectaInspector.addLogEntry(LogEntry(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -130,9 +145,9 @@ class TectaInspectorInterceptor extends Interceptor {
           'url': options.uri.toString(),
           'statusCode': response.statusCode,
           'duration': duration,
-          'requestHeaders': options.headers,
-          'requestBody': options.data,
-          'responseBody': response.data,
+          'requestHeaders': maskedRequestHeaders,
+          'requestBody': maskedRequestData,
+          'responseBody': maskedResponseBody,
         },
       ));
     }
@@ -156,6 +171,10 @@ class TectaInspectorInterceptor extends Interceptor {
       final startTime = options.extra[_startTimeKey] as int?;
       final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
+      final maskedRequestHeaders = MaskingUtil.mask(options.headers);
+      final maskedRequestData = MaskingUtil.mask(options.data);
+      final maskedResponseErrorBody = MaskingUtil.mask(err.response?.data);
+
       final contentBuffer = StringBuffer();
       contentBuffer.writeln('Method: ${options.method}');
       contentBuffer.writeln('URL: ${options.uri}');
@@ -163,10 +182,10 @@ class TectaInspectorInterceptor extends Interceptor {
       contentBuffer.writeln('Error Type: ${err.type}');
       contentBuffer.writeln('Status Code: ${err.response?.statusCode}');
       contentBuffer.writeln('Error Message: ${err.message}');
-      contentBuffer.writeln('\n[Headers]\n${_prettyJsonEncode(options.headers)}');
-      contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(options.data)}');
+      contentBuffer.writeln('\n[Headers]\n${_prettyJsonEncode(maskedRequestHeaders)}');
+      contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(maskedRequestData)}');
       if (err.response?.data != null) {
-        contentBuffer.writeln('\n[Response Error Body]\n${_prettyJsonEncode(err.response?.data)}');
+        contentBuffer.writeln('\n[Response Error Body]\n${_prettyJsonEncode(maskedResponseErrorBody)}');
       }
 
       TectaInspector.addLogEntry(LogEntry(
@@ -183,9 +202,9 @@ class TectaInspectorInterceptor extends Interceptor {
           'url': options.uri.toString(),
           'statusCode': err.response?.statusCode,
           'duration': duration,
-          'requestHeaders': options.headers,
-          'requestBody': options.data,
-          'responseBody': err.response?.data,
+          'requestHeaders': maskedRequestHeaders,
+          'requestBody': maskedRequestData,
+          'responseBody': maskedResponseErrorBody,
         },
       ));
     }

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'models/log_entry.dart';
 import 'inspector_controller.dart';
+import 'masking_util.dart';
 
 class TectaInspector {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -11,8 +12,16 @@ class TectaInspector {
   static bool get enabled => enabledNotifier.value;
 
   /// Initialize the inspector's enabled/disabled status
-  static void initialize({bool enabled = false}) {
+  static void initialize({
+    bool enabled = false,
+    int maxLogs = 150,
+    List<String>? maskedKeys,
+  }) {
     enabledNotifier.value = enabled;
+    InspectorController.instance.maxLogs = maxLogs;
+    if (maskedKeys != null) {
+      MaskingUtil.maskedKeys = maskedKeys;
+    }
 
     if (enabled) {
       // Automatically catch unhandled Flutter framework errors

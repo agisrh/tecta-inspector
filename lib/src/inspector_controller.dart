@@ -7,13 +7,19 @@ class InspectorController {
 
   final ValueNotifier<List<LogEntry>> logsNotifier = ValueNotifier<List<LogEntry>>([]);
 
+  int maxLogs = 150;
+
   List<LogEntry> get logs => logsNotifier.value;
 
   void addLog(LogEntry entry) {
     // Defer the value update to the next frame to avoid "setState() called during build" exceptions
     // if an error/exception is thrown and captured while Flutter is building the widget tree.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      logsNotifier.value = [entry, ...logsNotifier.value];
+      var updatedList = [entry, ...logsNotifier.value];
+      if (updatedList.length > maxLogs) {
+        updatedList = updatedList.sublist(0, maxLogs);
+      }
+      logsNotifier.value = updatedList;
     });
   }
 

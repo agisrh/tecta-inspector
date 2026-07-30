@@ -7,6 +7,8 @@ import 'dio_error_util.dart';
 
 enum MethodRequest { POST, GET, PUT, DELETE }
 
+typedef ErrorParser = Exception Function(int? statusCode, dynamic responseData);
+
 class TectaHttp {
   TectaHttp({
     required String baseUrl,
@@ -16,6 +18,7 @@ class TectaHttp {
     Duration? receiveTimeout = const Duration(seconds: 50),
     bool checkConnectivity = true,
     Future<bool> Function()? connectivityChecker,
+    this.customErrorParser,
     // Logger settings
     bool logRequestUrl = true,
     bool logRequestHeader = false,
@@ -79,6 +82,7 @@ class TectaHttp {
   late final Dio _dio;
   final bool _checkConnectivity;
   final Future<bool> Function()? _connectivityChecker;
+  final ErrorParser? customErrorParser;
 
   Dio get dio => _dio;
 
@@ -167,8 +171,8 @@ class TectaHttp {
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString());
+      if (e is TectaHttpException) rethrow;
+      throw TectaHttpException(message: e.toString());
     }
   }
 
@@ -217,14 +221,22 @@ class TectaHttp {
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString());
+      if (e is TectaHttpException) rethrow;
+      throw TectaHttpException(message: e.toString());
     }
   }
 
-  ApiException _handleDioError(DioException e) {
+  Exception _handleDioError(DioException e) {
     final statusCode = e.response?.statusCode;
     final data = e.response?.data;
+
+    if (customErrorParser != null) {
+      try {
+        return customErrorParser!(statusCode, data);
+      } catch (parserException) {
+        // Fallback if parser fails
+      }
+    }
 
     final serverMessage = _extractServerMessage(data);
     final fallbackMessage = DioErrorUtil.handleError(e);

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.2
+
+- **Features & Fixes**
+  - Added custom error exception `TectaHttpException` and custom `ErrorParser` callback parameter to `TectaHttp`.
+  - Added `maxLogs` limit to prevent memory leaks in production.
+  - Added `MaskingUtil` to automatically sanitize and mask sensitive keys (e.g. passwords, tokens, cookies).
+  - Fixed `ConnectivityStatus` to support safe execution on Flutter Web platforms.
+
 ## 0.0.1
 
 - **Initial Release**
