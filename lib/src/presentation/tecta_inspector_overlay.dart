@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../tecta_inspector_facade.dart';
 import 'tecta_inspector_dashboard.dart';
 
-class TectaInspectorOverlay extends StatefulWidget {
+class TcInspectorOverlay extends StatefulWidget {
   final Widget child;
 
-  const TectaInspectorOverlay({super.key, required this.child});
+  const TcInspectorOverlay({super.key, required this.child});
 
   @override
-  State<TectaInspectorOverlay> createState() => _TectaInspectorOverlayState();
+  State<TcInspectorOverlay> createState() => _TcInspectorOverlayState();
 }
 
-class _TectaInspectorOverlayState extends State<TectaInspectorOverlay> {
+class _TcInspectorOverlayState extends State<TcInspectorOverlay> {
   Offset _position = const Offset(-1, -1); // Uninitialized indicator
   bool _isDragging = false;
 
@@ -35,10 +35,10 @@ class _TectaInspectorOverlayState extends State<TectaInspectorOverlay> {
         children: [
           widget.child,
           ValueListenableBuilder<bool>(
-            valueListenable: TectaInspector.enabledNotifier,
+            valueListenable: TcInspector.enabledNotifier,
             builder: (context, enabled, _) {
               return ValueListenableBuilder<bool>(
-                valueListenable: TectaInspector.isDashboardOpen,
+                valueListenable: TcInspector.isDashboardOpen,
                 builder: (context, isDashboardOpen, _) {
                   if (!enabled || isDashboardOpen) return const SizedBox.shrink();
                   return Positioned(
@@ -72,9 +72,9 @@ class _TectaInspectorOverlayState extends State<TectaInspectorOverlay> {
                       },
                       onTap: () {
                         if (!_isDragging) {
-                          TectaInspector.navigatorKey.currentState?.push(
+                          TcInspector.navigatorKey.currentState?.push(
                             MaterialPageRoute<void>(
-                              builder: (context) => const TectaInspectorDashboard(),
+                              builder: (context) => const TcInspectorDashboard(),
                               fullscreenDialog: true,
                             ),
                           );

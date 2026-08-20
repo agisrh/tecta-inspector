@@ -9,6 +9,17 @@ class MaskingUtil {
     'cookie',
   ];
 
+  static final List<RegExp> sensitivePatterns = [
+    // JWT Token Pattern
+    RegExp(r'eyJhbGciOi[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*'),
+    // Bearer Token Pattern
+    RegExp(r'^Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$', caseSensitive: false),
+    // Basic Auth Pattern
+    RegExp(r'^Basic\s+[A-Za-z0-9+/=]+$', caseSensitive: false),
+    // Credit Card (simple 13-16 digits pattern)
+    RegExp(r'\b(?:\d[ -]*?){13,16}\b'),
+  ];
+
   /// Masks sensitive fields recursively in maps or lists.
   static dynamic mask(dynamic data) {
     if (data == null) return null;
@@ -28,6 +39,14 @@ class MaskingUtil {
 
     if (data is List) {
       return data.map((item) => mask(item)).toList();
+    }
+
+    if (data is String) {
+      for (final pattern in sensitivePatterns) {
+        if (pattern.hasMatch(data)) {
+          return '*** [MASKED] ***';
+        }
+      }
     }
 
     return data;

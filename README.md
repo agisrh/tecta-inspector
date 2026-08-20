@@ -1,4 +1,4 @@
-# Tecta Inspector
+# Tc Inspector
 
 A powerful, developer-friendly in-app debugging and logging tool for Flutter applications. It automatically intercepts network requests, captures console logs, monitors database operations, tracks page navigation, and auto-detects unhandled application errors—all accessible via a beautiful, reactive, floating in-app dashboard.
 
@@ -6,7 +6,7 @@ A powerful, developer-friendly in-app debugging and logging tool for Flutter app
 
 - 🎯 **Floating Inspector Button**: Access the dashboard anytime from anywhere. Fully reactive and automatically hides itself when the dashboard is open.
 - 🎨 **Sleek Light/Dark Mode**: A beautiful, modern interface with responsive styles and dynamic dark/light mode toggle.
-- 🌐 **Network Request Interception**: Automatically tracks API requests, status codes, request/response headers, parameters, and bodies using `TectaHttp` and custom interceptors.
+- 🌐 **Network Request Interception**: Automatically tracks API requests, status codes, request/response headers, parameters, and bodies using `TcHttp` and custom interceptors.
 - 📦 **Categorized Logs Dashboard**: Filters log entries into 5 distinct categories:
   - **All**: Complete unified stream of all captured logs.
   - **Print**: Standard console prints and custom manual log messages.
@@ -33,22 +33,22 @@ dependencies:
 
 ## Quick Start
 
-### 1. Initialize Tecta Inspector
-Call `TectaInspector.initialize` in your `main()` method before running the app. You can conditionally enable or disable it based on whether it is running in production.
+### 1. Initialize Tc Inspector
+Call `TcInspector.initialize` in your `main()` method before running the app. You can conditionally enable or disable it based on whether it is running in production.
 
 ```dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize the inspector
-  TectaInspector.initialize(enabled: true);
+  TcInspector.initialize(enabled: true);
 
   runApp(const MyApp());
 }
 ```
 
 ### 2. Configure MaterialApp & Overlay
-Configure `MaterialApp` with the inspector's `navigatorKey`, add the observer to track routes, and wrap the widget tree inside `TectaInspectorOverlay`.
+Configure `MaterialApp` with the inspector's `navigatorKey`, add the observer to track routes, and wrap the widget tree inside `TcInspectorOverlay`.
 
 ```dart
 class MyApp extends StatelessWidget {
@@ -57,13 +57,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tecta Inspector Example',
-      navigatorKey: TectaInspector.navigatorKey, // Required for pushing the dashboard
+      title: 'Tc Inspector Example',
+      navigatorKey: TcInspector.navigatorKey, // Required for pushing the dashboard
       navigatorObservers: [
-        TectaInspectorNavigatorObserver(), // Logs route transitions automatically
+        TcInspectorNavigatorObserver(), // Logs route transitions automatically
       ],
       builder: (context, child) {
-        return TectaInspectorOverlay(
+        return TcInspectorOverlay(
           child: child ?? const SizedBox(), // Renders the floating debugger button
         );
       },
@@ -78,10 +78,10 @@ class MyApp extends StatelessWidget {
 ## Usage Guide
 
 ### Network Logging
-Use `TectaHttp` as your main network client. It automatically integrates the `TectaInspectorInterceptor` under the hood.
+Use `TcHttp` as your main network client. It automatically integrates the `TcInspectorInterceptor` under the hood.
 
 ```dart
-final http = TectaHttp(baseUrl: 'https://api.example.com');
+final http = TcHttp(baseUrl: 'https://api.example.com');
 
 // Successful and failed HTTP calls are automatically logged to the Network tab!
 final response = await http.call('/posts', method: MethodRequest.GET);
@@ -91,7 +91,7 @@ final response = await http.call('/posts', method: MethodRequest.GET);
 Log regular strings or debug information directly to the **Print** tab:
 
 ```dart
-TectaInspector.log("User successfully clicked standard action button.");
+TcInspector.log("User successfully clicked standard action button.");
 ```
 
 ### Custom Error Logging
@@ -101,7 +101,7 @@ Log manual exceptions or try-catch blocks:
 try {
   // run some code
 } catch (e, stack) {
-  TectaInspector.logError("Failed to complete transaction", error: e, stackTrace: stack);
+  TcInspector.logError("Failed to complete transaction", error: e, stackTrace: stack);
 }
 ```
 
@@ -109,7 +109,7 @@ try {
 Log SQL queries or custom operations directly to the **Database** tab:
 
 ```dart
-TectaInspector.logDatabase(
+TcInspector.logDatabase(
   query: "SELECT * FROM users WHERE status = 'active';",
   result: "Found 12 active users",
 );

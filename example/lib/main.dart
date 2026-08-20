@@ -4,8 +4,8 @@ import 'package:tecta_inspector/tecta_inspector.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Tecta Inspector
-  TectaInspector.initialize(enabled: true);
+  // Initialize Tc Inspector
+  TcInspector.initialize(enabled: true);
 
   runApp(const MyApp());
 }
@@ -16,8 +16,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tecta Inspector Example',
-      navigatorKey: TectaInspector.navigatorKey,
+      title: 'Tc Inspector Example',
+      navigatorKey: TcInspector.navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.teal,
@@ -27,11 +27,11 @@ class MyApp extends StatelessWidget {
       ),
       // Add navigator observer to record routing logs automatically
       navigatorObservers: [
-        TectaInspectorNavigatorObserver(),
+        TcInspectorNavigatorObserver(),
       ],
-      // Wrap application with TectaInspectorOverlay
+      // Wrap application with TcInspectorOverlay
       builder: (context, child) {
-        return TectaInspectorOverlay(
+        return TcInspectorOverlay(
           child: child ?? const SizedBox(),
         );
       },
@@ -48,7 +48,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TectaHttp _http = TectaHttp(
+  final TcHttp _http = TcHttp(
     baseUrl: 'https://jsonplaceholder.typicode.com',
   );
 
@@ -56,20 +56,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _makeSuccessfulRequest() async {
     try {
-      TectaInspector.log("Sending GET request to /posts/1...");
+      TcInspector.log("Sending GET request to /posts/1...");
       final response = await _http.call(
         '/posts/1',
         method: MethodRequest.GET,
       );
-      TectaInspector.log("Request succeeded! Status Code: ${response.statusCode}");
+      TcInspector.log("Request succeeded! Status Code: ${response.statusCode}");
     } catch (e, stack) {
-      TectaInspector.logError("API Call failed", error: e, stackTrace: stack);
+      TcInspector.logError("API Call failed", error: e, stackTrace: stack);
     }
   }
 
   Future<void> _makeFailedRequest() async {
     try {
-      TectaInspector.log("Sending GET request to an invalid endpoint...");
+      TcInspector.log("Sending GET request to an invalid endpoint...");
       // This will throw a 404 Not Found error
       await _http.call(
         '/invalid-endpoint',
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e, stack) {
       // The interceptor automatically logs this network error,
       // but we can also manually log the caught exception details here.
-      TectaInspector.logError(
+      TcInspector.logError(
         "Request failed (Expected 404)",
         error: e,
         stackTrace: stack,
@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _triggerCrash() {
-    TectaInspector.log("Triggering a Null Pointer Exception...");
+    TcInspector.log("Triggering a Null Pointer Exception...");
     // This will throw a Null Pointer Exception which will be automatically
     // caught by the unhandled error handlers we registered in initialize().
     String? nullString;
@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Tecta Inspector Demo',
+          'Tc Inspector Demo',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: theme.colorScheme.primaryContainer,
@@ -137,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onChanged: (val) {
                           setState(() {
                             _inspectorEnabled = val;
-                            TectaInspector.initialize(enabled: val);
+                            TcInspector.initialize(enabled: val);
                           });
                         },
                       ),
@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () {
-                  TectaInspector.log("This is a manual custom log message written by a developer.");
+                  TcInspector.log("This is a manual custom log message written by a developer.");
                 },
                 icon: const Icon(Icons.edit_note_outlined),
                 label: const Text('Save Custom Print Log'),
@@ -189,8 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () {
-                  TectaInspector.logDatabase(
-                    query: "INSERT INTO users (name, email) VALUES ('Tecta Demo', 'demo@tecta.id')",
+                  TcInspector.logDatabase(
+                    query: "INSERT INTO users (name, email) VALUES ('Tc Demo', 'demo@tecta.id')",
                     result: "row inserted: 1",
                   );
                 },

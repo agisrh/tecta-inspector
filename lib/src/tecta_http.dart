@@ -9,8 +9,8 @@ enum MethodRequest { POST, GET, PUT, DELETE }
 
 typedef ErrorParser = Exception Function(int? statusCode, dynamic responseData);
 
-class TectaHttp {
-  TectaHttp({
+class TcHttp {
+  TcHttp({
     required String baseUrl,
     Dio? dio,
     List<Interceptor>? interceptors,
@@ -54,8 +54,8 @@ class TectaHttp {
       ),
     );
 
-    // TectaInspectorInterceptor (Replaces LoggerInterceptor)
-    _dio.interceptors.add(TectaInspectorInterceptor(
+    // TcInspectorInterceptor (Replaces LoggerInterceptor)
+    _dio.interceptors.add(TcInspectorInterceptor(
       logRequestUrl: logRequestUrl,
       logRequestHeader: logRequestHeader,
       logResponseHeader: logResponseHeader,
@@ -171,8 +171,8 @@ class TectaHttp {
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {
-      if (e is TectaHttpException) rethrow;
-      throw TectaHttpException(message: e.toString());
+      if (e is TcHttpException) rethrow;
+      throw TcHttpException(message: e.toString());
     }
   }
 
@@ -221,8 +221,8 @@ class TectaHttp {
     } on DioException catch (e) {
       throw _handleDioError(e);
     } catch (e) {
-      if (e is TectaHttpException) rethrow;
-      throw TectaHttpException(message: e.toString());
+      if (e is TcHttpException) rethrow;
+      throw TcHttpException(message: e.toString());
     }
   }
 

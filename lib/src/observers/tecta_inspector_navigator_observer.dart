@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../tecta_inspector_facade.dart';
 import '../models/log_entry.dart';
 
-class TectaInspectorNavigatorObserver extends NavigatorObserver {
+class TcInspectorNavigatorObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
-    if (!TectaInspector.enabled) return;
+    if (!TcInspector.enabled) return;
 
     final routeName = route.settings.name ?? 'unnamed';
     final prevRouteName = previousRoute?.settings.name ?? 'none';
 
-    TectaInspector.addLogEntry(LogEntry(
+    TcInspector.addLogEntry(LogEntry(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
       type: LogType.navigator,
@@ -28,12 +28,12 @@ class TectaInspectorNavigatorObserver extends NavigatorObserver {
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
-    if (!TectaInspector.enabled) return;
+    if (!TcInspector.enabled) return;
 
     final routeName = route.settings.name ?? 'unnamed';
     final prevRouteName = previousRoute?.settings.name ?? 'none';
 
-    TectaInspector.addLogEntry(LogEntry(
+    TcInspector.addLogEntry(LogEntry(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
       type: LogType.navigator,
@@ -49,12 +49,12 @@ class TectaInspectorNavigatorObserver extends NavigatorObserver {
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (!TectaInspector.enabled) return;
+    if (!TcInspector.enabled) return;
 
     final newRouteName = newRoute?.settings.name ?? 'unnamed';
     final oldRouteName = oldRoute?.settings.name ?? 'unnamed';
 
-    TectaInspector.addLogEntry(LogEntry(
+    TcInspector.addLogEntry(LogEntry(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
       type: LogType.navigator,

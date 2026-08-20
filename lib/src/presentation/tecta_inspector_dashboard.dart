@@ -4,14 +4,14 @@ import '../models/log_entry.dart';
 import '../tecta_inspector_facade.dart';
 import 'widgets/log_item_widget.dart';
 
-class TectaInspectorDashboard extends StatefulWidget {
-  const TectaInspectorDashboard({super.key});
+class TcInspectorDashboard extends StatefulWidget {
+  const TcInspectorDashboard({super.key});
 
   @override
-  State<TectaInspectorDashboard> createState() => _TectaInspectorDashboardState();
+  State<TcInspectorDashboard> createState() => _TcInspectorDashboardState();
 }
 
-class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
+class _TcInspectorDashboardState extends State<TcInspectorDashboard>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
@@ -22,7 +22,7 @@ class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      TectaInspector.isDashboardOpen.value = true;
+      TcInspector.isDashboardOpen.value = true;
     });
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() => setState(() {}));
@@ -36,7 +36,7 @@ class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
   @override
   void dispose() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      TectaInspector.isDashboardOpen.value = false;
+      TcInspector.isDashboardOpen.value = false;
     });
     _tabController.dispose();
     _searchController.dispose();
@@ -86,7 +86,7 @@ class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
           backgroundColor: appBarBg,
           elevation: 0,
           title: Text(
-            'Tecta Inspector',
+            'Tc Inspector',
             style: TextStyle(fontWeight: FontWeight.bold, color: titleTextColor),
           ),
           actions: [
@@ -118,7 +118,7 @@ class _TectaInspectorDashboardState extends State<TectaInspectorDashboard>
                       ),
                       TextButton(
                         onPressed: () {
-                          TectaInspector.clearLogs();
+                          TcInspector.clearLogs();
                           Navigator.pop(ctx);
                         },
                         child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),

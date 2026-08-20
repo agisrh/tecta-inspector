@@ -4,7 +4,7 @@ import 'models/log_entry.dart';
 import 'inspector_controller.dart';
 import 'masking_util.dart';
 
-class TectaInspector {
+class TcInspector {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static final ValueNotifier<bool> enabledNotifier = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> isDashboardOpen = ValueNotifier<bool>(false);
@@ -17,7 +17,12 @@ class TectaInspector {
     int maxLogs = 150,
     List<String>? maskedKeys,
   }) {
-    enabledNotifier.value = enabled;
+    // Automatically disable in release mode to protect sensitive network/log data
+    if (kReleaseMode) {
+      enabledNotifier.value = false;
+    } else {
+      enabledNotifier.value = enabled;
+    }
     InspectorController.instance.maxLogs = maxLogs;
     if (maskedKeys != null) {
       MaskingUtil.maskedKeys = maskedKeys;

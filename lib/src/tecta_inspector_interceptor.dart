@@ -46,8 +46,8 @@ void logDebug(String message, {Level level = Level.info}) {
   }
 }
 
-class TectaInspectorInterceptor extends Interceptor {
-  TectaInspectorInterceptor({
+class TcInspectorInterceptor extends Interceptor {
+  TcInspectorInterceptor({
     this.logRequestUrl = true,
     this.logRequestHeader = false,
     this.logRequestBody = false,
@@ -112,8 +112,8 @@ class TectaInspectorInterceptor extends Interceptor {
           level: Level.debug);
     }
 
-    // Record network log to TectaInspector
-    if (TectaInspector.enabled) {
+    // Record network log to TcInspector
+    if (TcInspector.enabled) {
       final startTime = options.extra[_startTimeKey] as int?;
       final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
@@ -134,7 +134,7 @@ class TectaInspectorInterceptor extends Interceptor {
       contentBuffer.writeln('\n[Request Body]\n${_prettyJsonEncode(maskedRequestData)}');
       contentBuffer.writeln('\n[Response Body]\n${_prettyJsonEncode(maskedResponseBody)}');
 
-      TectaInspector.addLogEntry(LogEntry(
+      TcInspector.addLogEntry(LogEntry(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         timestamp: DateTime.now(),
         type: LogType.network,
@@ -166,8 +166,8 @@ class TectaInspectorInterceptor extends Interceptor {
       logDebug('onError: ${err.error}, Message: ${err.message}', level: Level.debug);
     }
 
-    // Record network error log to TectaInspector
-    if (TectaInspector.enabled) {
+    // Record network error log to TcInspector
+    if (TcInspector.enabled) {
       final startTime = options.extra[_startTimeKey] as int?;
       final duration = startTime != null ? DateTime.now().millisecondsSinceEpoch - startTime : 0;
 
@@ -188,7 +188,7 @@ class TectaInspectorInterceptor extends Interceptor {
         contentBuffer.writeln('\n[Response Error Body]\n${_prettyJsonEncode(maskedResponseErrorBody)}');
       }
 
-      TectaInspector.addLogEntry(LogEntry(
+      TcInspector.addLogEntry(LogEntry(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         timestamp: DateTime.now(),
         type: LogType.network,
@@ -215,9 +215,17 @@ class TectaInspectorInterceptor extends Interceptor {
   String _prettyJsonEncode(dynamic data) {
     try {
       const encoder = JsonEncoder.withIndent('  ');
-      return encoder.convert(data);
+      final result = encoder.convert(data);
+      if (result.length > 20000) {
+        return '${result.substring(0, 20000)}\n\n... [TRUNCATED due to large payload size (${result.length} characters)] ...';
+      }
+      return result;
     } catch (_) {
-      return data.toString();
+      final str = data.toString();
+      if (str.length > 20000) {
+        return '${str.substring(0, 20000)}\n\n... [TRUNCATED due to large payload size (${str.length} characters)] ...';
+      }
+      return str;
     }
   }
 }

@@ -1,7 +1,7 @@
-/// Base class for all TectaHttp exceptions.
-class TectaHttpException implements Exception {
-  /// Creates a new [TectaHttpException].
-  TectaHttpException({required this.message, this.statusCode, this.data});
+/// Base class for all TcHttp exceptions.
+class TcHttpException implements Exception {
+  /// Creates a new [TcHttpException].
+  TcHttpException({required this.message, this.statusCode, this.data});
 
   /// A human-readable error message.
   final String message;
@@ -13,29 +13,29 @@ class TectaHttpException implements Exception {
   final dynamic data;
 
   @override
-  String toString() => 'TectaHttpException: $message (Status: $statusCode)';
+  String toString() => 'TcHttpException: $message (Status: $statusCode)';
 }
 
-/// Deprecated: Use [TectaHttpException] instead.
-@Deprecated('Use TectaHttpException instead')
-typedef ApiException = TectaHttpException;
+/// Deprecated: Use [TcHttpException] instead.
+@Deprecated('Use TcHttpException instead')
+typedef ApiException = TcHttpException;
 
 /// Thrown when there is no internet connection.
-class NoInternetException extends TectaHttpException {
+class NoInternetException extends TcHttpException {
   /// Creates a new [NoInternetException].
   NoInternetException()
       : super(message: "No internet connection", statusCode: 0);
 }
 
 /// Thrown when the request times out.
-class ServerTimeoutException extends TectaHttpException {
+class ServerTimeoutException extends TcHttpException {
   /// Creates a new [ServerTimeoutException].
   ServerTimeoutException(String message)
       : super(message: message, statusCode: 408);
 }
 
 /// Thrown when the server returns a 4xx or 5xx error.
-class ServerResponseException extends TectaHttpException {
+class ServerResponseException extends TcHttpException {
   /// Creates a new [ServerResponseException].
   ServerResponseException({
     required super.message,
