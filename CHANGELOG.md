@@ -1,17 +1,15 @@
 # Changelog
 
-## 0.0.4
-
-- **Critical Fixes & Security Updates**
-  - Fixed request queue hang issue in `AuthInterceptor` when the refresh token provider returns a null or empty token.
-  - Automatically force disable `TectaInspector` when running in Release Mode (`kReleaseMode == true`) to protect sensitive application log and network data in production.
-
 ## 0.0.3
 
 - **Features & Performance Optimizations**
   - Implemented robust request queueing/locks in `AuthInterceptor` to prevent race conditions during concurrent unauthorized (401) API requests.
   - Added payload string truncation (up to 20,000 characters) in `TcInspectorInterceptor` to limit memory usage for extremely large payloads.
   - Enhanced `MaskingUtil` to support RegExp pattern censoring (detecting JWT, Bearer Token, Basic Auth, and Credit Cards) alongside deep-key traversal.
+
+- **Critical Fixes & Security Updates**
+  - Fixed request queue hang issue in `AuthInterceptor` when the refresh token provider returns a null or empty token.
+  - Automatically force disable `TectaInspector` when running in Release Mode (`kReleaseMode == true`) to protect sensitive application log and network data in production.
 
 ## 0.0.2
 
