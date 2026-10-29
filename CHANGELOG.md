@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.4
+
+- **Features**
+  - Added `allowInReleaseMode` to `TcInspector.initialize`. The inspector stays force-disabled in release mode by default; pass `allowInReleaseMode: true` to keep it on for internal QA or staging release builds.
+  - Added an optional `validateStatus` parameter to `TcHttp` to customize which HTTP status codes are treated as successful. Defaults to Dio's behaviour (2xx only), so 4xx/5xx still raise `TcHttpException` and 401 responses still trigger `AuthInterceptor` token refresh.
+
+- **Docs**
+  - Updated the installation guide to use the pub.dev dependency.
+
 ## 0.0.3
 
 - **Features & Performance Optimizations**

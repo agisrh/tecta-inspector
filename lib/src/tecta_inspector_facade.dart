@@ -12,23 +12,23 @@ class TcInspector {
   static bool get enabled => enabledNotifier.value;
 
   /// Initialize the inspector's enabled/disabled status
+  ///
+  /// The inspector is forced off in release mode to protect sensitive
+  /// network/log data. Set [allowInReleaseMode] to `true` to opt out of that
+  /// protection, e.g. for internal QA or staging builds.
   static void initialize({
     bool enabled = false,
+    bool allowInReleaseMode = false,
     int maxLogs = 150,
     List<String>? maskedKeys,
   }) {
-    // Automatically disable in release mode to protect sensitive network/log data
-    if (kReleaseMode) {
-      enabledNotifier.value = false;
-    } else {
-      enabledNotifier.value = enabled;
-    }
+    enabledNotifier.value = enabled && (!kReleaseMode || allowInReleaseMode);
     InspectorController.instance.maxLogs = maxLogs;
     if (maskedKeys != null) {
       MaskingUtil.maskedKeys = maskedKeys;
     }
 
-    if (enabled) {
+    if (enabledNotifier.value) {
       // Automatically catch unhandled Flutter framework errors
       final originalOnError = FlutterError.onError;
       FlutterError.onError = (FlutterErrorDetails details) {

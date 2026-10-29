@@ -1,6 +1,8 @@
 analyzer:
   errors:
     constant_identifier_names: ignore
+  exclude:
+    - build/**
 
 linter:
   rules:

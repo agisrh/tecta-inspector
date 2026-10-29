@@ -19,6 +19,7 @@ class TcHttp {
     bool checkConnectivity = true,
     Future<bool> Function()? connectivityChecker,
     this.customErrorParser,
+    ValidateStatus? validateStatus,
     // Logger settings
     bool logRequestUrl = true,
     bool logRequestHeader = false,
@@ -36,6 +37,11 @@ class TcHttp {
       'Accept': 'application/json',
     });
     _dio.options.receiveDataWhenStatusError = true;
+    // Only override Dio's default (2xx = success) when asked. Accepting 4xx as
+    // success means 401s no longer reach AuthInterceptor's token refresh.
+    if (validateStatus != null) {
+      _dio.options.validateStatus = validateStatus;
+    }
 
     // Add custom interceptors if provided
     if (interceptors != null) {

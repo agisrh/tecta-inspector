@@ -25,8 +25,7 @@ Add `tecta_inspector` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  tecta_inspector:
-    path: ../tecta-api # Use standard pub.dev dependency versioning once published
+  tecta_inspector: ^0.0.4
 ```
 
 ---
@@ -45,6 +44,12 @@ void main() {
 
   runApp(const MyApp());
 }
+```
+
+The inspector is automatically disabled in release builds to protect sensitive network and log data. To keep it on in a release build (for example an internal QA or staging build), opt in explicitly:
+
+```dart
+TcInspector.initialize(enabled: true, allowInReleaseMode: true);
 ```
 
 ### 2. Configure MaterialApp & Overlay
@@ -86,6 +91,17 @@ final http = TcHttp(baseUrl: 'https://api.example.com');
 // Successful and failed HTTP calls are automatically logged to the Network tab!
 final response = await http.call('/posts', method: MethodRequest.GET);
 ```
+
+By default only 2xx responses are treated as successful; anything else throws a `TcHttpException`. To receive 4xx responses as normal `Response` objects instead, pass `validateStatus`:
+
+```dart
+final http = TcHttp(
+  baseUrl: 'https://api.example.com',
+  validateStatus: (status) => status != null && status < 500,
+);
+```
+
+> Note: when 401 is treated as successful, `AuthInterceptor` will not refresh the token for that response.
 
 ### Manual Console Logs
 Log regular strings or debug information directly to the **Print** tab:
