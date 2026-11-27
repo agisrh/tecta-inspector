@@ -27,6 +27,8 @@ class TcHttp {
     bool logResponseBody = true,
     bool logResponseHeader = false,
     bool logResponseError = true,
+    // Retry settings
+    bool retryNonIdempotent = false,
   })  : _checkConnectivity = checkConnectivity,
         _connectivityChecker = connectivityChecker {
     _dio = dio ?? Dio();
@@ -76,6 +78,7 @@ class TcHttp {
         dio: _dio,
         logPrint: (message) => logDebug(message, level: Level.debug),
         retries: 3,
+        retryNonIdempotent: retryNonIdempotent,
         retryDelays: const [
           Duration(seconds: 1),
           Duration(seconds: 2),

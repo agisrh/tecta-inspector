@@ -11,21 +11,54 @@ class TcInspector {
 
   static bool get enabled => enabledNotifier.value;
 
+  /// Whether the user may switch masking off to read the real values. Set by
+  /// [initialize].
+  static bool allowUnmasking = false;
+
+  /// Whether sensitive values are masked in what is logged from now on. Listen
+  /// to it to show a warning while it is off.
+  static final ValueNotifier<bool> maskingEnabledNotifier = ValueNotifier<bool>(true);
+
+  static bool get maskingEnabled => maskingEnabledNotifier.value;
+
+  /// Turns masking on or off for the logs recorded after this call. Turning it
+  /// off does nothing unless [allowUnmasking] is set. The choice is not saved:
+  /// [initialize] starts with masking on.
+  static void setMaskingEnabled(bool value) {
+    if (!value && !allowUnmasking) return;
+    MaskingUtil.enabled = value;
+    maskingEnabledNotifier.value = value;
+  }
+
   /// Initialize the inspector's enabled/disabled status
   ///
   /// The inspector is forced off in release mode to protect sensitive
   /// network/log data. Set [allowInReleaseMode] to `true` to opt out of that
   /// protection, e.g. for internal QA or staging builds.
+  ///
+  /// [allowUnmasking] lets the user switch masking off from the dashboard to
+  /// read real values. It defaults to `true` outside release mode and `false`
+  /// in release mode, so a QA build that keeps the inspector on does not let
+  /// anyone read passwords and tokens unless the app asks for it.
   static void initialize({
     bool enabled = false,
     bool allowInReleaseMode = false,
+    bool? allowUnmasking,
     int maxLogs = 150,
     List<String>? maskedKeys,
+    List<String>? unmaskedKeys,
   }) {
     enabledNotifier.value = enabled && (!kReleaseMode || allowInReleaseMode);
+    TcInspector.allowUnmasking = allowUnmasking ?? !kReleaseMode;
+    // Every start is masked, whatever was chosen before.
+    MaskingUtil.enabled = true;
+    maskingEnabledNotifier.value = true;
     InspectorController.instance.maxLogs = maxLogs;
     if (maskedKeys != null) {
       MaskingUtil.maskedKeys = maskedKeys;
+    }
+    if (unmaskedKeys != null) {
+      MaskingUtil.unmaskedKeys = unmaskedKeys;
     }
 
     if (enabledNotifier.value) {
