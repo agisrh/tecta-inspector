@@ -26,6 +26,7 @@ class RetryInterceptor extends Interceptor {
     RetryEvaluator? retryEvaluator,
     this.ignoreRetryEvaluatorExceptions = false,
     this.retryableExtraStatuses = const {},
+    this.retryNonIdempotent = false,
   }) : _retryEvaluator = retryEvaluator ??
             DefaultRetryEvaluator({
               ...defaultRetryableStatuses,
@@ -68,6 +69,20 @@ class RetryInterceptor extends Interceptor {
   /// Evaluating if a retry is necessary.regarding the error.
   final RetryEvaluator _retryEvaluator;
 
+  /// Whether a failed call whose method is not idempotent (POST, PATCH) is tried
+  /// again too. It is not by default: the server may have taken the first try,
+  /// and a second one can charge, create or use up something twice.
+  final bool retryNonIdempotent;
+
+  /// The methods that can be sent again without changing the outcome.
+  static const Set<String> _idempotentMethods = {
+    'GET',
+    'HEAD',
+    'OPTIONS',
+    'PUT',
+    'DELETE',
+  };
+
   /// Specifies an extra retryable statuses.
   final Set<int> retryableExtraStatuses;
 
@@ -101,6 +116,10 @@ class RetryInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.requestOptions.disableRetry) {
+      return super.onError(err, handler);
+    }
+    if (!retryNonIdempotent &&
+        !_idempotentMethods.contains(err.requestOptions.method.toUpperCase())) {
       return super.onError(err, handler);
     }
     bool isRequestCancelled() =>
@@ -206,7 +225,8 @@ class RetryInterceptor extends Interceptor {
 
 const _kDisableRetryKey = 'ro_disable_retry';
 
-extension RequestOptionsX on RequestOptions {
+/// Reads and sets the retry state of a request inside the client.
+extension TcRetryRequestOptions on RequestOptions {
   static const _kAttemptKey = 'ro_attempt';
 
   int get attempt => _attempt;
@@ -220,7 +240,9 @@ extension RequestOptionsX on RequestOptions {
   set _attempt(int value) => extra[_kAttemptKey] = value;
 }
 
-extension OptionsX on Options {
+/// Lets a call leave the retry out: `Options()..disableRetry = true`. Use it for
+/// a call that carries something that works only once, such as a one-time code.
+extension TcRetryOptions on Options {
   bool get disableRetry => (extra?[_kDisableRetryKey] as bool?) ?? false;
 
   set disableRetry(bool value) {
