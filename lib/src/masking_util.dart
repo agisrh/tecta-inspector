@@ -1,15 +1,41 @@
 class MaskingUtil {
-  static List<String> maskedKeys = [
+  /// Whether [mask] hides anything. It is on unless the inspector's user turned
+  /// it off to read the real values; it only affects what is logged afterwards.
+  static bool enabled = true;
+
+  /// The names that are secrets, as shipped. An app that sets [maskedKeys]
+  /// replaces them; to add its own, `[...MaskingUtil.defaultMaskedKeys, 'cpf']`.
+  static const List<String> defaultMaskedKeys = [
     'authorization',
     'password',
+    'passwd',
+    'pwd',
+    'password confirm',
+    'password confirmation',
+    'password repeat',
     'token',
-    'access_token',
     'secret',
     'pin',
     'cookie',
     'captcha',
     'otp',
+    'otp code',
+    'key',
+    'hash',
+    'signature',
   ];
+
+  /// The names whose fields are masked. A field is masked when its name ENDS
+  /// with one of them, word by word: `newPassword`, `refresh_token` and
+  /// `passwordChangeToken` end with `password` or `token`; `passwordExpired`
+  /// and `tokenType` do not. What a name ends with is what the field holds.
+  static List<String> maskedKeys = [...defaultMaskedKeys];
+
+  /// Field names that are never masked, even when they end with a masked name.
+  /// Each one matches the whole name, in any casing style: `sort_key` matches
+  /// `sortKey`, not `primaryKey`.
+  static List<String> unmaskedKeys = [];
+
 
   static final List<RegExp> sensitivePatterns = [
     // JWT Token Pattern
@@ -27,27 +53,32 @@ class MaskingUtil {
 
   /// Whether the field called [key] holds something sensitive.
   ///
-  /// A key matches when the words of a masked key appear, in order, among the
-  /// words of [key]. Words are split on case changes and on anything that is
-  /// not a letter or digit, so `fcmToken`, `access_token` and `refresh-token`
-  /// match `token`, while `shipping` does not match `pin`.
+  /// The name is split into words on case changes and on anything that is not a
+  /// letter or digit: `fcmToken`, `access_token` and `refresh-token` end with
+  /// the word `token`. A field is masked when its words end with the words of a
+  /// masked name, so `shipping` does not match `pin`, and `passwordExpired` does
+  /// not match `password` because the name ends with `expired`.
   static bool isMaskedKey(String key) {
     final words = _words(key);
+    if (words.isEmpty) return false;
+    if (unmaskedKeys.any((name) => _sameWords(_words(name), words))) return false;
     return maskedKeys.any((masked) {
       final needle = _words(masked);
       if (needle.isEmpty || needle.length > words.length) return false;
-      for (var start = 0; start <= words.length - needle.length; start++) {
-        var matches = true;
-        for (var i = 0; i < needle.length; i++) {
-          if (words[start + i] != needle[i]) {
-            matches = false;
-            break;
-          }
-        }
-        if (matches) return true;
+      final offset = words.length - needle.length;
+      for (var i = 0; i < needle.length; i++) {
+        if (words[offset + i] != needle[i]) return false;
       }
-      return false;
+      return true;
     });
+  }
+
+  static bool _sameWords(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   static List<String> _words(String key) => key
@@ -85,12 +116,14 @@ class MaskingUtil {
   /// Masks sensitive fields recursively in maps or lists.
   static dynamic mask(dynamic data) {
     if (data == null) return null;
+    if (!enabled) return data;
 
     if (data is Map) {
       final Map<String, dynamic> maskedMap = {};
       data.forEach((key, value) {
         final String keyStr = key.toString();
-        if (isMaskedKey(keyStr)) {
+        // A true or false cannot be a secret, whatever the key is called.
+        if (isMaskedKey(keyStr) && value is! bool) {
           maskedMap[keyStr] = '*** [MASKED] ***';
         } else {
           maskedMap[keyStr] = mask(value);

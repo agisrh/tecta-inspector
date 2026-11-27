@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.6
+
+- **Features**
+  - **Show real values.** An eye button in the dashboard app bar switches masking off for the logs recorded from then on, after a confirmation, and a red strip warns while it is off. Logs already recorded stay masked, so a secret is never kept in memory while masking is on. The choice is not saved: every start is masked. New `TcInspector.initialize(allowUnmasking:)`, which defaults to `true` outside release mode and `false` in release mode, so a QA build that keeps the inspector on does not offer the button unless the app asks for it. Also `TcInspector.setMaskingEnabled`, `maskingEnabled`, `maskingEnabledNotifier` and `MaskingUtil.enabled`.
+
+- **Behaviour change: masking**
+  - **The last word decides.** A field is masked when its name ENDS with a masked name, word by word. Words are split on case changes and on anything that is not a letter or digit. `newPassword`, `passwordHash`, `passwordChangeToken`, `mfaToken`, `refresh_token`, `fcmToken`, `apiKey` and `otpCode` are masked; `passwordExpired`, `passwordAgeDays`, `passwordWarning`, `passwordChangeRequired`, `tokenType`, `tokenExpDate`, `passwordChangedAt` and `shipping` are not. There is no list of descriptive words to keep up to date.
+  - The default names are in `MaskingUtil.defaultMaskedKeys`: authorization, password, passwd, pwd, password confirm, password confirmation, password repeat, token, secret, pin, cookie, captcha, otp, otp code, key, hash, signature. An app that passes `maskedKeys` to `TcInspector.initialize` replaces them; to add its own, pass `[...MaskingUtil.defaultMaskedKeys, 'cpf']`. Before this version a name matched anywhere in the field name; now it must be at the end.
+  - New `unmaskedKeys` for `TcInspector.initialize`: field names that are never masked, matching the whole name (`sort_key` matches `sortKey`).
+  - A `true` or `false` is never masked, whatever the key is called.
+
 ## 0.0.5
 
 - **Behaviour change: masking**

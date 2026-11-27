@@ -25,7 +25,7 @@ Add `tecta_inspector` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  tecta_inspector: ^0.0.5
+  tecta_inspector: ^0.0.6
 ```
 
 ---

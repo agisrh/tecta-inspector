@@ -130,6 +130,18 @@ class _TcInspectorDashboardState extends State<TcInspectorDashboard>
             style: TextStyle(fontWeight: FontWeight.bold, color: titleTextColor),
           ),
           actions: [
+            if (TcInspector.allowUnmasking)
+              ValueListenableBuilder<bool>(
+                valueListenable: TcInspector.maskingEnabledNotifier,
+                builder: (context, masking, _) => IconButton(
+                  icon: Icon(
+                    masking ? Icons.visibility_off_outlined : Icons.visibility,
+                    color: masking ? titleTextColor : Colors.redAccent,
+                  ),
+                  tooltip: masking ? 'Show real values' : 'Mask sensitive values',
+                  onPressed: () => masking ? _confirmUnmask() : TcInspector.setMaskingEnabled(true),
+                ),
+              ),
             IconButton(
               icon: Icon(
                 _isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
@@ -258,29 +270,61 @@ class _TcInspectorDashboardState extends State<TcInspectorDashboard>
             ),
           ),
         ),
-        body: ValueListenableBuilder<List<LogEntry>>(
-          valueListenable: InspectorController.instance.logsNotifier,
-          builder: (context, allLogs, _) {
-            final filteredLogs = _filterLogs(allLogs);
-
-            if (filteredLogs.isEmpty) return _buildEmpty(allLogs.isEmpty);
-
-            return ListView.builder(
-              itemCount: filteredLogs.length,
-              itemBuilder: (context, index) {
-                final log = filteredLogs[index];
-                return LogItemWidget(
-                  log: log,
-                  isDarkMode: _isDarkMode,
-                  index: index,
-                  highlight: _searchQuery,
-                );
-              },
-            );
-          },
+        body: Column(
+          children: [
+            const _UnmaskedBanner(),
+            Expanded(child: _buildLogs()),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildLogs() {
+    return ValueListenableBuilder<List<LogEntry>>(
+      valueListenable: InspectorController.instance.logsNotifier,
+      builder: (context, allLogs, _) {
+        final filteredLogs = _filterLogs(allLogs);
+
+        if (filteredLogs.isEmpty) return _buildEmpty(allLogs.isEmpty);
+
+        return ListView.builder(
+          itemCount: filteredLogs.length,
+          itemBuilder: (context, index) {
+            final log = filteredLogs[index];
+            return LogItemWidget(
+              log: log,
+              isDarkMode: _isDarkMode,
+              index: index,
+              highlight: _searchQuery,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Switching masking off shows passwords and tokens, so it asks first.
+  Future<void> _confirmUnmask() async {
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Show real values?'),
+        content: const Text(
+          'Passwords, tokens and other sensitive values will be visible in the '
+          'logs recorded from now on. Logs already recorded stay masked. '
+          'Masking is on again the next time the app starts.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Show real values', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (agreed ?? false) TcInspector.setMaskingEnabled(false);
   }
 
   Widget _buildEmpty(bool noLogsAtAll) {
@@ -305,6 +349,38 @@ class _TcInspectorDashboardState extends State<TcInspectorDashboard>
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A red strip while masking is off, so nobody forgets that real values show.
+class _UnmaskedBanner extends StatelessWidget {
+  const _UnmaskedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: TcInspector.maskingEnabledNotifier,
+      builder: (context, masking, _) {
+        if (masking) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          color: Colors.redAccent.withValues(alpha: 0.2),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 18, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Masking is off: passwords and tokens show in new logs',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.redAccent),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
