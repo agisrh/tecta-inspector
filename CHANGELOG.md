@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.0.5
+
+- **Behaviour change: masking**
+  - A key is now masked when the words of a masked key appear among the words of the field name. Words are split on case changes and on anything that is not a letter or digit, so `fcmToken`, `access_token` and `refresh-token` match `token`, while `shipping` and `mapping` no longer match `pin`. Keys passed to `TcInspector.initialize(maskedKeys: ...)` follow the same rule.
+  - Card numbers are masked only when the digits pass the Luhn check, so millisecond timestamps and similar numbers are left alone.
+  - `captcha` and `otp` are masked by default.
+  - Added `MaskingUtil.isMaskedKey`.
+
+- **UI**
+  - The dashboard title reads "Inspector" instead of "Tc Inspector".
+  - The app bar keeps one colour while the list scrolls under it. Before, Material 3 tinted it and the search field was hard to tell apart from the bar.
+  - The theme (dark or light) is kept while the app runs, so reopening the dashboard does not reset it.
+  - The search field is 44 logical pixels high, and its clear button has a 44 pixel touch area.
+  - The search also looks in the error and in every metadata value, such as a database `result`.
+  - New **Errors** chip next to the search field. It shows how many failures there are (error logs and responses with status 400 or more) and, when selected, lists only those.
+  - Each tab shows how many entries it holds in a small rounded badge, for example `Network` with a `12` badge.
+  - The empty state tells apart "No logs yet", "No logs match \"query\"" (with a **Clear search** button), "No errors here" and "Nothing in this tab yet".
+  - The **Errors** chip is red while there are failures and muted when there are none, filled when it is on, and its number sits in the same rounded badge the tabs use.
+  - A network row ends its time line with the **duration** (`08:05:09.042 • NETWORK • 128 ms`). Times show milliseconds. The title already carries the method and the status.
+  - An opened network log is split into foldable sections: **Summary**, **Error**, **Request body**, **Response body**, **Request headers** (folded) and **Raw log** (folded).
+  - Bodies are indented and coloured (keys, strings, numbers and keywords), and a body longer than 40 lines shows a **Show all** button. Individual JSON nodes cannot be folded.
+  - A stack trace dims the frames of the Dart SDK and common framework packages, so the app's own frames stand out. Which packages count as framework is a fixed list.
+  - The search text is highlighted in the title of each match.
+  - Network logs have **Copy cURL** and **Copy Response** next to **Copy Log**. The cURL command uses the masked headers and body the inspector stores, so fill in secrets before running it.
+
+- **API**
+  - `LogEntry.isFailure` and `LogEntry.matches(query)`.
+
+- **Fixes**
+  - A failed network call is titled with its status code (`POST /login - 401`), like a successful one. Only a call without any response, such as a timeout, is titled `Error`.
+  - Text on the light theme is readable: times, labels, section titles and the JSON colours, the status colours and the Errors chip all reach a contrast ratio of 4.5 or more on the row backgrounds. Tests check this.
+  - A log added while the app is idle now requests a frame, so it shows up at once instead of waiting for something else to draw.
+
 ## 0.0.4
 
 - **Features**

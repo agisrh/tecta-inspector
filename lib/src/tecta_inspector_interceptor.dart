@@ -192,7 +192,8 @@ class TcInspectorInterceptor extends Interceptor {
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         timestamp: DateTime.now(),
         type: LogType.network,
-        title: '${options.method} ${options.path} - Error',
+        // Without a response, such as a timeout, there is no status to show.
+        title: '${options.method} ${options.path} - ${err.response?.statusCode ?? 'Error'}',
         content: contentBuffer.toString(),
         isError: true,
         error: err.toString(),
