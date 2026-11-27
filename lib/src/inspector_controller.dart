@@ -21,6 +21,9 @@ class InspectorController {
       }
       logsNotifier.value = updatedList;
     });
+    // A post-frame callback does not ask for a frame by itself. Without this
+    // an entry added while the app is idle stays unseen until something draws.
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   void clearLogs() {

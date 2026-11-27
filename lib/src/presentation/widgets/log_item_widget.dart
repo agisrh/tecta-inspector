@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../curl_builder.dart';
 import '../../models/log_entry.dart';
+import '../inspector_colors.dart';
+import 'json_view.dart';
+import 'log_chips.dart';
+import 'log_sections.dart';
+import 'stack_trace_view.dart';
 
 class LogItemWidget extends StatefulWidget {
   final LogEntry log;
   final bool isDarkMode;
   final int index;
+
+  /// The search text, highlighted in the title.
+  final String highlight;
   const LogItemWidget({
     super.key,
     required this.log,
     required this.isDarkMode,
     required this.index,
+    this.highlight = '',
   });
 
   @override
@@ -49,12 +59,15 @@ class _LogItemWidgetState extends State<LogItemWidget> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle_outline, color: Colors.tealAccent, size: 16),
+                  const Icon(Icons.check_circle_outline,
+                      color: Colors.tealAccent, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     message,
                     style: const TextStyle(
-                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -70,18 +83,42 @@ class _LogItemWidgetState extends State<LogItemWidget> {
     });
   }
 
+  Widget _copyButton(String label, String text, String toast) {
+    final color = widget.isDarkMode ? Colors.tealAccent : Colors.teal;
+    return OutlinedButton.icon(
+      onPressed: () {
+        Clipboard.setData(ClipboardData(text: text));
+        _showToast(context, toast);
+      },
+      icon: Icon(Icons.copy_all, size: 16, color: color),
+      label: Text(
+        label,
+        style:
+            TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color.withValues(alpha: 0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: const Size(0, 34),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
   Color _getLogColor(LogType type) {
-    if (widget.log.isError) return Colors.redAccent;
+    final dark = widget.isDarkMode;
+    if (widget.log.isError) return dark ? Colors.redAccent : Colors.red.shade900;
     switch (type) {
       case LogType.network:
-        return Colors.greenAccent;
+        return dark ? Colors.greenAccent : Colors.green.shade900;
       case LogType.database:
-        return Colors.orangeAccent;
+        return dark ? Colors.orangeAccent : const Color(0xFF9A4A00);
       case LogType.navigator:
-        return Colors.blueAccent;
+        return dark ? Colors.blueAccent : Colors.blue.shade900;
       case LogType.print:
       default:
-        return widget.isDarkMode ? Colors.white70 : Colors.black54;
+        return dark ? Colors.white70 : Colors.black54;
     }
   }
 
@@ -100,26 +137,144 @@ class _LogItemWidgetState extends State<LogItemWidget> {
     }
   }
 
+  String _time(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.hour)}:${two(t.minute)}:${two(t.second)}.${t.millisecond.toString().padLeft(3, '0')}';
+  }
+
+  /// `time • TYPE`, and for a network log the duration after it. The title
+  /// already says the method and the status, so they are not repeated here.
+  Widget _subtitle(LogEntry log) {
+    final duration = log.type == LogType.network ? log.durationMs : null;
+    return Text(
+      '${_time(log.timestamp)} • ${log.type.name.toUpperCase()}'
+      '${duration != null ? ' • $duration ms' : ''}',
+      style: TextStyle(color: InspectorColors.secondaryText(widget.isDarkMode), fontSize: 11),
+    );
+  }
+
+  /// The parts of a network log, each of which can be folded.
+  List<Widget> _networkSections(LogEntry log) {
+    final dark = widget.isDarkMode;
+    final status = log.statusCode;
+    final requestBody = prettyBody(log.metadata?['requestBody']);
+    final responseBody = prettyBody(log.metadata?['responseBody']);
+    final headers = log.metadata?['requestHeaders'];
+
+    return [
+      LogSection(
+        title: 'Summary',
+        isDarkMode: dark,
+        child: Column(
+          children: [
+            SummaryRow(label: 'Method', value: log.method ?? '-', isDarkMode: dark),
+            SummaryRow(label: 'URL', value: '${log.metadata?['url'] ?? '-'}', isDarkMode: dark),
+            SummaryRow(
+              label: 'Status',
+              value: status?.toString() ?? 'No response',
+              isDarkMode: dark,
+              valueColor: statusColor(status, dark: dark),
+            ),
+            if (log.durationMs != null)
+              SummaryRow(label: 'Duration', value: '${log.durationMs} ms', isDarkMode: dark),
+          ],
+        ),
+      ),
+      if (log.error != null)
+        LogSection(
+          title: 'Error',
+          isDarkMode: dark,
+          child: SelectableText(
+            log.error!,
+            style: const TextStyle(
+                fontFamily: 'monospace', fontSize: 12, color: Colors.redAccent),
+          ),
+        ),
+      if (requestBody.isNotEmpty && requestBody != '{}')
+        LogSection(
+          title: 'Request body',
+          isDarkMode: dark,
+          child: JsonView(text: requestBody, isDarkMode: dark),
+        ),
+      if (responseBody.isNotEmpty)
+        LogSection(
+          title: log.isError ? 'Error response' : 'Response body',
+          isDarkMode: dark,
+          child: JsonView(text: responseBody, isDarkMode: dark),
+        ),
+      if (headers is Map && headers.isNotEmpty)
+        LogSection(
+          title: 'Request headers',
+          isDarkMode: dark,
+          initiallyExpanded: false,
+          child: JsonView(text: prettyBody(headers), isDarkMode: dark),
+        ),
+      LogSection(
+        title: 'Raw log',
+        isDarkMode: dark,
+        initiallyExpanded: false,
+        child: SelectableText(
+          log.content,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 12,
+            color: InspectorColors.primaryText(dark),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _plainSections(LogEntry log) {
+    final dark = widget.isDarkMode;
+    return [
+      SelectableText(
+        log.content,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 12,
+          color: InspectorColors.primaryText(dark),
+        ),
+      ),
+      if (log.error != null) ...[
+        const SizedBox(height: 12),
+        LogSection(
+          title: 'Error',
+          isDarkMode: dark,
+          child: SelectableText(
+            log.error!,
+            style: const TextStyle(
+                fontFamily: 'monospace', fontSize: 12, color: Colors.redAccent),
+          ),
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final log = widget.log;
     final logColor = _getLogColor(log.type);
-    final timeStr =
-        '${log.timestamp.hour.toString().padLeft(2, '0')}:${log.timestamp.minute.toString().padLeft(2, '0')}:${log.timestamp.second.toString().padLeft(2, '0')}';
 
     // Alternating row background color (zebra striping)
     final rowBgColor = widget.index % 2 == 0
         ? (widget.isDarkMode ? const Color(0xFF18181A) : Colors.white)
-        : (widget.isDarkMode ? const Color(0xFF222225) : const Color(0xFFF2F4F7));
+        : (widget.isDarkMode
+            ? const Color(0xFF222225)
+            : const Color(0xFFF2F4F7));
 
-    final containerBg = widget.isDarkMode ? const Color(0xFF101012) : const Color(0xFFECEFF1);
+    final containerBg =
+        widget.isDarkMode ? const Color(0xFF101012) : const Color(0xFFECEFF1);
     final textTitleColor = log.isError
-        ? Colors.redAccent
+        ? (widget.isDarkMode ? Colors.redAccent : Colors.red.shade900)
         : (widget.isDarkMode ? Colors.white : const Color(0xFF1C1C1E));
-    final detailTextColor = widget.isDarkMode ? const Color(0xFFE0E0E0) : const Color(0xFF2C2C2C);
-    final stackTraceBg = widget.isDarkMode ? const Color(0xFF2A1C1C) : const Color(0xFFFFEBEE);
-    final stackTraceTextColor =
-        widget.isDarkMode ? const Color(0xFFFFCDCD) : const Color(0xFFC62828);
+
+    final curl = buildCurl(log);
+    final responseBody = log.metadata?['responseBody'];
+    final response = log.type == LogType.network && responseBody != null
+        ? prettyBody(responseBody)
+        : null;
+    final isNetwork = log.type == LogType.network && log.method != null;
 
     final borderColor = widget.isDarkMode
         ? Colors.white.withValues(alpha: 0.05)
@@ -132,18 +287,16 @@ class _LogItemWidgetState extends State<LogItemWidget> {
           ListTile(
             dense: true,
             leading: Icon(_getLogIcon(log.type), color: logColor, size: 22),
-            title: Text(
-              log.title,
+            title: HighlightText(
+              text: log.title,
+              query: widget.highlight,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: textTitleColor,
                 fontSize: 14,
               ),
             ),
-            subtitle: Text(
-              '$timeStr • ${log.type.name.toUpperCase()}',
-              style: const TextStyle(color: Colors.grey, fontSize: 11),
-            ),
+            subtitle: _subtitle(log),
             trailing: Icon(
               _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               color: Colors.grey,
@@ -157,7 +310,8 @@ class _LogItemWidgetState extends State<LogItemWidget> {
           if (_isExpanded)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               decoration: BoxDecoration(
                 color: containerBg,
                 border: Border(
@@ -170,83 +324,32 @@ class _LogItemWidgetState extends State<LogItemWidget> {
                 children: [
                   Align(
                     alignment: Alignment.topRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: log.content));
-                        _showToast(context, 'Log copied to clipboard!');
-                      },
-                      icon: Icon(Icons.copy_all,
-                          size: 16, color: widget.isDarkMode ? Colors.tealAccent : Colors.teal),
-                      label: Text(
-                        'Copy Log',
-                        style: TextStyle(
-                          color: widget.isDarkMode ? Colors.tealAccent : Colors.teal,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: [
+                        _copyButton('Copy Log', log.content,
+                            'Log copied to clipboard!'),
+                        if (curl != null)
+                          _copyButton(
+                              'Copy cURL', curl, 'cURL copied to clipboard!'),
+                        if (response != null)
+                          _copyButton('Copy Response', response,
+                              'Response copied to clipboard!'),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    log.content,
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                      color: detailTextColor,
+                  const SizedBox(height: 12),
+                  ...(isNetwork ? _networkSections(log) : _plainSections(log)),
+                  if (log.stackTrace != null && log.stackTrace!.isNotEmpty)
+                    LogSection(
+                      title: 'Stack trace',
+                      isDarkMode: widget.isDarkMode,
+                      child: StackTraceView(
+                          stackTrace: log.stackTrace!,
+                          isDarkMode: widget.isDarkMode),
                     ),
-                  ),
-                  if (log.error != null) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Error Message:',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
-                    ),
-                    SelectableText(
-                      log.error!,
-                      style: const TextStyle(
-                          fontFamily: 'monospace', fontSize: 12, color: Colors.redAccent),
-                    ),
-                  ],
-                  if (log.stackTrace != null && log.stackTrace!.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Stack Trace:',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 12),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: stackTraceBg,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: widget.isDarkMode
-                              ? Colors.redAccent.withValues(alpha: 0.15)
-                              : Colors.red.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: SingleChildScrollView(
-                        child: SelectableText(
-                          log.stackTrace!,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            color: stackTraceTextColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
